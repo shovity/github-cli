@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Get current path
+currentPath="$(dirname "$(readlink -f "$0")")"
+
+# Get repo name
+repoName=$1
+
+# Get access token
+if [ -f "$currentPath/token" ]; then
+  token=$(cat $currentPath/token)
+else
+  echo "warning: You not have access token"
+fi
+
+# get username if exists
+if [ "$repoName" = "" ]; then
+  echo "error: Lost repo name param. Try: github create {reponame} [options]"
+  exit
+fi
+
+echo "create github repositries $repoName"
+
+# send api create repo github
+if [ -z $token ]; then
+  read  -p "github username: " username
+  curl -u $username https://api.github.com/user/repos -d '{"name":"'$repoName'"}'
+  fullName="$username/$repoName"
+else
+  response=$(curl -H "Authorization: token $token" https://api.github.com/user/repos -d '{"name":"'$repoName'"}')
+  fullName=$(echo $response | cut -d'"' -f 10)
+fi
+echo 'full name'
+
+while [ true ]; do
+  read -p "Init git local and remote [ssh/https]? (s/h/n): " next
+
+  if [ "$next" = "s" ]; then
+    mkdir $repoName
+    cd $repoName
+    git init
+    git remote add origin "git@github.com:$fullName.git'"
+    echo 'adding remote origin...'
+    git config --get remote.origin.url
+    exit 0
+  fi
+
+  if [ "$next" = "h" ]; then
+    mkdir $repoName
+    cd $repoName
+    git init
+    git remote add origin "https://github.com/$fullName.git"
+    echo 'adding remote origin...'
+    git config --get remote.origin.url
+    exit 0
+  fi
+
+  if [ "$next" = "n" ]; then
+    echo 'Canceled'
+    exit 0
+  fi
+
+  echo 'input only (s/h/n)'
+
+done
