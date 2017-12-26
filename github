@@ -1,13 +1,53 @@
 #!/bin/bash
-#
-# Get current path
-currentPath="$(dirname "$(readlink -f "$0")")"
 
-case $1 in
-  create)
-    sh $currentPath/create-repo $2 $3 $4 $5 $6 $7
-    ;;
-  *)
-    echo "Sorry, I don't understand"
-    ;;
-esac
+# get repo name
+repoName=$1
+
+# default username
+username="shovity"
+
+# get username if exists
+if [ "$2" != "" ]; then
+  username="$2"
+fi
+
+# check repo name exist
+test -z $repoName && echo "Repo name required." 1>&2 && exit 1
+
+echo 'create github repositries "'$username/$repoName'"'
+echo '...'
+
+# send api create repo github
+curl -u $username https://api.github.com/user/repos -d '{"name":"'$repoName'"}'
+
+while [ true ]; do
+  read -p "Init git local and remote [ssh/https]? (s/h/n): " next
+
+  if [ "$next" = "s" ]; then
+    mkdir $repoName
+    cd $repoName
+    git init
+    git remote add origin 'git@github.com:'$username/$repoName'.git'
+    echo 'adding remote origin...'
+    git config --get remote.origin.url
+    exit 0
+  fi
+
+  if [ "$next" = "h" ]; then
+    mkdir $repoName
+    cd $repoName
+    git init
+    git remote add origin 'https://github.com/'$username/$repoName'.git'
+    echo 'adding remote origin...'
+    git config --get remote.origin.url
+    exit 0
+  fi
+
+  if [ "$next" = "n" ]; then
+    echo 'Canceled'
+    exit 0
+  fi
+
+  echo 'input only (s/h/n)'
+
+done
