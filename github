@@ -18,7 +18,7 @@ echo 'create github repositries "'$username/$repoName'"'
 echo '...'
 
 # send api create repo github
-echo "Authorization: token $token" https://api.github.com/user/repos -d '{"name":"'$repoName'"}'
+curl -v -H "Authorization: token $token" https://api.github.com/user/repos -d '{"name":"'$repoName'"}'
 
 while [ true ]; do
   read -p "Init git local and remote [ssh/https]? (s/h/n): " next
